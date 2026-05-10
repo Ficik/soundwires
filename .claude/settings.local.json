@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pw-dump --version)",
+      "Bash(pw-dump)",
+      "Bash(python3 -c ' *)",
+      "Bash(pw-dump --help)",
+      "Bash(timeout 3 pw-mon)",
+      "Bash(timeout 3 pw-dump --monitor)",
+      "Bash(wpctl status *)",
+      "Bash(wpctl --help)",
+      "Bash(go mod *)",
+      "Bash(go get *)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(go build *)",
+      "Bash(./soundwires --port 18080)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:18080/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:18080/api/record)",
+      "Bash(kill %1)",
+      "Bash(pw-play --help)",
+      "Bash(pw-cat --help)",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); nodes=[o for o in data if o['type']=='PipeWire:Interface:Node' and o.get\\('info',{}\\).get\\('props',{}\\).get\\('media.class'\\)]; [print\\(n['id'], n['info']['props'].get\\('media.class',''\\), n['info']['props'].get\\('node.name',''\\), 'in:', n['info']['n-input-ports'], 'out:', n['info']['n-output-ports']\\) for n in nodes]\")",
+      "Bash(make build *)",
+      "Bash(xargs ls -la)"
+    ]
+  }
+}
