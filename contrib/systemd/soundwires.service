@@ -1,0 +1,14 @@
+[Unit]
+Description=soundwires PipeWire graph visualizer
+Documentation=https://github.com/standa-fifik/soundwires
+After=pipewire.service
+Wants=pipewire.service
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/soundwires
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target

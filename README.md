@@ -65,6 +65,23 @@ Then open `http://<host>:8080` in a browser.
 
 The binary itself is statically linked (`CGO_ENABLED=0`), so there's no glibc/musl concern.
 
+### Running as a systemd user service
+
+A unit file is provided at [contrib/systemd/soundwires.service](contrib/systemd/soundwires.service). It assumes the binary is installed at `~/.local/bin/soundwires`.
+
+```
+install -Dm755 bin/soundwires-arm64 ~/.local/bin/soundwires
+install -Dm644 contrib/systemd/soundwires.service ~/.config/systemd/user/soundwires.service
+systemctl --user daemon-reload
+systemctl --user enable --now soundwires.service
+```
+
+For the service to keep running after you log out, enable lingering for the user once:
+
+```
+sudo loginctl enable-linger $USER
+```
+
 ## Development
 
 ```
