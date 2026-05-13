@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useSocket } from './composables/useSocket'
 import { usePipeWireStore } from './stores/pipewire'
 import GraphView from './components/GraphView.vue'
@@ -13,6 +14,19 @@ const statusColor: Record<string, string> = {
   connected: '#4ade80',
   connecting: '#facc15',
   disconnected: '#f87171',
+}
+
+const reloading = ref(false)
+async function reload() {
+  if (reloading.value) return
+  reloading.value = true
+  try {
+    await fetch('/api/reload', { method: 'POST' })
+  } catch {
+    // ignore — server will re-emit init on the next poll if it succeeded
+  } finally {
+    reloading.value = false
+  }
 }
 </script>
 
@@ -31,6 +45,14 @@ const statusColor: Record<string, string> = {
       <span class="topbar-count">
         {{ store.allNodes.length }} nodes · {{ store.links.length }} links
       </span>
+      <button
+        class="topbar-reload"
+        :disabled="reloading"
+        title="Restart pw-dump tracking and rebuild the graph"
+        @click="reload"
+      >
+        {{ reloading ? '⟳ reloading…' : '⟳ reload' }}
+      </button>
     </header>
 
     <!-- Main split -->
@@ -81,6 +103,18 @@ const statusColor: Record<string, string> = {
     font-size: 12px;
   }
   .topbar-count { color: #475569; font-size: 12px; margin-left: auto; }
+  .topbar-reload {
+    background: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .topbar-reload:hover:not(:disabled) { background: #334155; color: #e2e8f0; }
+  .topbar-reload:disabled { opacity: 0.5; cursor: progress; }
 
   .main-split {
     display: flex;

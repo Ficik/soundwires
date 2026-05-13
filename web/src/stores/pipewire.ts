@@ -188,6 +188,34 @@ export const usePipeWireStore = defineStore('pipewire', () => {
         style: { stroke: '#60a5fa', strokeWidth: 2 },
       })
     }
+
+    // Synthetic loopback edges: sink and source nodes sharing the same node.link-group
+    // are two sides of one loopback — connect them so the graph shows
+    // stream → sink → source → next node instead of two disconnected clusters.
+    const linkGroups = new Map<string, PWObject[]>()
+    for (const node of allNodes.value) {
+      const linkGroup = getProps(node)['node.link-group'] as string | undefined
+      if (linkGroup === undefined) continue
+      if (!linkGroups.has(linkGroup)) linkGroups.set(linkGroup, [])
+      linkGroups.get(linkGroup)!.push(node)
+    }
+    for (const group of linkGroups.values()) {
+      if (group.length < 2) continue
+      const sinks = group.filter(n => ['Audio/Sink', 'Stream/Input/Audio'].includes(mediaClass(n)))
+      const sources = group.filter(n => ['Audio/Source', 'Stream/Output/Audio'].includes(mediaClass(n)))
+      for (const sink of sinks) {
+        for (const source of sources) {
+          edges.push({
+            id: `loopback-${sink.id}-${source.id}`,
+            source: String(sink.id),
+            target: String(source.id),
+            animated: true,
+            style: { stroke: '#a78bfa', strokeWidth: 2, strokeDasharray: '6,3' },
+          })
+        }
+      }
+    }
+
     return edges
   })
 

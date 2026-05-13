@@ -1,4 +1,4 @@
-import { ref, shallowRef } from 'vue'
+import { ref, shallowRef, watch } from 'vue'
 
 export interface MonitorState {
   active: boolean
@@ -12,10 +12,12 @@ export function useMonitor() {
   const active = ref(false)
   const error = ref<string | null>(null)
   const analyser = shallowRef<AnalyserNode | null>(null)
+  const muted = ref(false)
 
   let ws: WebSocket | null = null
   let ctx: AudioContext | null = null
   let analyserNode: AnalyserNode | null = null
+  let gainNode: GainNode | null = null
   let nextPlayAt = 0
   let channels = 2
   let rate = 48000
@@ -68,7 +70,6 @@ export function useMonitor() {
       const src = ctx.createBufferSource()
       src.buffer = audioBuffer
       src.connect(analyserNode)
-      src.connect(ctx.destination)
 
       const now = ctx.currentTime
       if (nextPlayAt < now) nextPlayAt = now + 0.05 // small buffer to avoid glitches
@@ -96,7 +97,10 @@ export function useMonitor() {
     ctx = new AudioContext({ sampleRate: rate })
     analyserNode = ctx.createAnalyser()
     analyserNode.fftSize = 2048
-    analyserNode.connect(ctx.destination)
+    gainNode = ctx.createGain()
+    gainNode.gain.value = muted.value ? 0 : 1
+    analyserNode.connect(gainNode)
+    gainNode.connect(ctx.destination)
     analyser.value = analyserNode
     nextPlayAt = 0
   }
@@ -104,10 +108,15 @@ export function useMonitor() {
   function cleanupAudio() {
     analyser.value = null
     analyserNode = null
+    gainNode = null
     ctx?.close().catch(() => {})
     ctx = null
     nextPlayAt = 0
   }
+
+  watch(muted, (v) => {
+    if (gainNode) gainNode.gain.value = v ? 0 : 1
+  })
 
   function stop() {
     active.value = false
@@ -116,5 +125,5 @@ export function useMonitor() {
     cleanupAudio()
   }
 
-  return { active, error, analyser, start, stop }
+  return { active, error, analyser, muted, start, stop }
 }

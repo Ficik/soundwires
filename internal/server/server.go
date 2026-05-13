@@ -11,7 +11,9 @@ import (
 )
 
 type Config struct {
-	PwCatBin string
+	PwCatBin  string
+	PwLinkBin string
+	PwDumpBin string
 }
 
 // New builds the HTTP mux, wires up WebSocket hub and event broadcast loop,
@@ -54,7 +56,18 @@ func New(staticFiles embed.FS, watcher *pipewire.Watcher, cfg Config) http.Handl
 	// Audio endpoints
 	mux.HandleFunc("/api/record", recordHandler(cfg.PwCatBin))
 	mux.HandleFunc("/api/play", playHandler(cfg.PwCatBin))
-	mux.HandleFunc("/ws/monitor", monitorWsHandler(cfg.PwCatBin))
+	mux.HandleFunc("/ws/monitor", monitorWsHandler(cfg.PwCatBin, cfg.PwLinkBin, cfg.PwDumpBin))
+
+	// Drop tracked state and resend a fresh init. Used after PipeWire restarts
+	// when incremental diffs have left the client graph in a bad shape.
+	mux.HandleFunc("/api/reload", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		watcher.Reload()
+		w.WriteHeader(http.StatusNoContent)
+	})
 
 	// Broadcast watcher events to all WebSocket clients
 	go func() {

@@ -5,7 +5,7 @@ import { useMonitor } from '../composables/useMonitor'
 import LevelMeter from './LevelMeter.vue'
 
 const store = usePipeWireStore()
-const { active, error, analyser, start, stop } = useMonitor()
+const { active, error, analyser, muted, start, stop } = useMonitor()
 
 const channels = ref(2)
 const rate = ref(48000)
@@ -57,6 +57,27 @@ function toggle() {
         <option :value="48000">48000</option>
         <option :value="96000">96000</option>
       </select>
+      <button
+        type="button"
+        class="mute-btn"
+        :class="{ 'mute-btn--on': muted }"
+        :title="muted ? 'Unmute' : 'Mute'"
+        :aria-pressed="muted"
+        @click="muted = !muted"
+      >
+        <svg v-if="!muted" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+          <path
+            fill="currentColor"
+            d="M3 10v4a1 1 0 0 0 1 1h3l4 4a1 1 0 0 0 1.7-.7V5.7A1 1 0 0 0 11 5L7 9H4a1 1 0 0 0-1 1Zm12.5 2a4 4 0 0 0-2-3.46v6.93A4 4 0 0 0 15.5 12Zm-2-7.07v2.06a7 7 0 0 1 0 13.02v2.06a9 9 0 0 0 0-17.14Z"
+          />
+        </svg>
+        <svg v-else viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+          <path
+            fill="currentColor"
+            d="M3 10v4a1 1 0 0 0 1 1h3l4 4a1 1 0 0 0 1.7-.7V5.7A1 1 0 0 0 11 5L7 9H4a1 1 0 0 0-1 1Zm17.7 6.3-2.6-2.6 2.6-2.6a1 1 0 0 0-1.4-1.4L16.7 12.3 14.1 9.7a1 1 0 1 0-1.4 1.4l2.6 2.6-2.6 2.6a1 1 0 1 0 1.4 1.4l2.6-2.6 2.6 2.6a1 1 0 0 0 1.4-1.4Z"
+          />
+        </svg>
+      </button>
     </div>
 
     <button
@@ -74,3 +95,30 @@ function toggle() {
     <div v-if="active && !error" class="panel-recording">● Monitoring…</div>
   </div>
 </template>
+
+<style>
+@layer components {
+  .mute-btn {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border-radius: 6px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+  }
+  .mute-btn:hover { background: #334155; color: #e2e8f0; }
+  .mute-btn--on {
+    background: #7f1d1d;
+    border-color: #b91c1c;
+    color: #fecaca;
+  }
+  .mute-btn--on:hover { background: #991b1b; color: #fff; }
+}
+</style>

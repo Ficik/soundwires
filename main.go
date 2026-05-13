@@ -21,13 +21,16 @@ func main() {
 	interval := flag.Int("interval", 500, "PipeWire poll interval in milliseconds")
 	pwDump := flag.String("pw-dump", "pw-dump", "pw-dump binary path")
 	pwCat := flag.String("pw-cat", "pw-cat", "pw-cat binary path (used for both record and playback)")
+	pwLink := flag.String("pw-link", "pw-link", "pw-link binary path (used for manual port linking in monitor)")
 	flag.Parse()
 
 	watcher := pipewire.NewWatcher(*pwDump, time.Duration(*interval)*time.Millisecond)
 	go watcher.Run()
 
 	cfg := server.Config{
-		PwCatBin: *pwCat,
+		PwCatBin:  *pwCat,
+		PwLinkBin: *pwLink,
+		PwDumpBin: *pwDump,
 	}
 
 	addr := fmt.Sprintf("%s:%d", *host, *port)

@@ -28,6 +28,7 @@ type Watcher struct {
 	pwDumpBin string
 	interval  time.Duration
 	Events    chan Event
+	reload    chan struct{}
 
 	current map[int]string // id → raw JSON fingerprint
 }
@@ -37,7 +38,18 @@ func NewWatcher(pwDumpBin string, interval time.Duration) *Watcher {
 		pwDumpBin: pwDumpBin,
 		interval:  interval,
 		Events:    make(chan Event, 64),
+		reload:    make(chan struct{}, 1),
 		current:   make(map[int]string),
+	}
+}
+
+// Reload drops the watcher's tracked state and causes the next poll to emit
+// a fresh EventInit, so clients can rebuild the graph from scratch. Safe to
+// call from any goroutine; coalesces if called repeatedly while pending.
+func (w *Watcher) Reload() {
+	select {
+	case w.reload <- struct{}{}:
+	default:
 	}
 }
 
@@ -46,20 +58,21 @@ func (w *Watcher) Run() {
 	ticker := time.NewTicker(w.interval)
 	defer ticker.Stop()
 
-	for range ticker.C {
+	poll := func() {
 		objects, err := Dump(w.pwDumpBin)
 		if err != nil {
 			log.Printf("pw-dump error: %v", err)
-			continue
+			return
 		}
 
 		if first {
 			first = false
+			w.current = make(map[int]string, len(objects))
 			for _, obj := range objects {
 				w.current[obj.ID] = fingerprint(obj)
 			}
 			w.Events <- Event{Type: EventInit, Objects: objects}
-			continue
+			return
 		}
 
 		seen := make(map[int]bool, len(objects))
@@ -84,6 +97,16 @@ func (w *Watcher) Run() {
 				id := id
 				w.Events <- Event{Type: EventRemoved, ID: &id}
 			}
+		}
+	}
+
+	for {
+		select {
+		case <-w.reload:
+			first = true
+			poll()
+		case <-ticker.C:
+			poll()
 		}
 	}
 }
