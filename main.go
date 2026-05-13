@@ -2,11 +2,12 @@ package main
 
 import (
 	"embed"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/spf13/pflag"
 
 	"soundwires/internal/pipewire"
 	"soundwires/internal/server"
@@ -16,13 +17,13 @@ import (
 var staticFiles embed.FS
 
 func main() {
-	port := flag.Int("port", 8080, "HTTP port to listen on")
-	host := flag.String("host", "0.0.0.0", "bind address")
-	interval := flag.Int("interval", 500, "PipeWire poll interval in milliseconds")
-	pwDump := flag.String("pw-dump", "pw-dump", "pw-dump binary path")
-	pwCat := flag.String("pw-cat", "pw-cat", "pw-cat binary path (used for both record and playback)")
-	pwLink := flag.String("pw-link", "pw-link", "pw-link binary path (used for manual port linking in monitor)")
-	flag.Parse()
+	port := pflag.IntP("port", "p", 8080, "HTTP port to listen on")
+	host := pflag.StringP("host", "H", "0.0.0.0", "bind address")
+	interval := pflag.IntP("interval", "i", 500, "PipeWire poll interval in milliseconds")
+	pwDump := pflag.String("pw-dump", "pw-dump", "pw-dump binary path")
+	pwCat := pflag.String("pw-cat", "pw-cat", "pw-cat binary path (used for both record and playback)")
+	pwLink := pflag.String("pw-link", "pw-link", "pw-link binary path (used for manual port linking in monitor)")
+	pflag.Parse()
 
 	watcher := pipewire.NewWatcher(*pwDump, time.Duration(*interval)*time.Millisecond)
 	go watcher.Run()
